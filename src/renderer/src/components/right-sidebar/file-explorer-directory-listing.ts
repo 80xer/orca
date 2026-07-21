@@ -1,5 +1,6 @@
 import { joinPath, normalizeRelativePath } from '@/lib/path'
 import type { DirEntry } from '../../../../shared/types'
+import { compareFileExplorerEntries } from '../../../../shared/file-explorer-sort'
 import { readRuntimeDirectory } from '@/runtime/runtime-file-client'
 import type { FileExplorerOperationOwner, TreeNode } from './file-explorer-types'
 import { shouldIncludeFileExplorerEntry } from './file-explorer-entries'
@@ -21,20 +22,23 @@ export function fileExplorerEntriesToTreeNodes(
   worktreePath: string | null,
   operationOwner: FileExplorerOperationOwner
 ): TreeNode[] {
-  return entries.filter(shouldIncludeFileExplorerEntry).map((entry) => {
-    const path = joinPath(dirPath, entry.name)
-    return {
-      name: entry.name,
-      path,
-      relativePath: worktreePath
-        ? normalizeRelativePath(path.slice(worktreePath.length + 1))
-        : entry.name,
-      isDirectory: entry.isDirectory,
-      isSymlink: entry.isSymlink,
-      depth: depth + 1,
-      operationOwner
-    }
-  })
+  return entries
+    .filter(shouldIncludeFileExplorerEntry)
+    .map((entry) => {
+      const path = joinPath(dirPath, entry.name)
+      return {
+        name: entry.name,
+        path,
+        relativePath: worktreePath
+          ? normalizeRelativePath(path.slice(worktreePath.length + 1))
+          : entry.name,
+        isDirectory: entry.isDirectory,
+        isSymlink: entry.isSymlink,
+        depth: depth + 1,
+        operationOwner
+      }
+    })
+    .sort(compareFileExplorerEntries)
 }
 
 export async function readFileExplorerDirectory(

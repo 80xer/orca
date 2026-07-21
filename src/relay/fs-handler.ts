@@ -24,6 +24,7 @@ import {
 } from '../shared/file-listing-cancellation'
 import { isQuickOpenReaddirBudgetError } from '../shared/quick-open-readdir-walk'
 import { buildExcludePathPrefixes } from '../shared/quick-open-filter'
+import { compareFileExplorerEntries } from '../shared/file-explorer-sort'
 import { buildInstallRgMessage } from './fs-handler-install-rg'
 import { readRelayFileContent, readRelayFileStreamMetadata } from './fs-handler-file-read'
 import {
@@ -148,12 +149,13 @@ export class FsHandler {
         isSymlink: entry.isSymbolicLink()
       }))
     )
-    return mapped.sort((a, b) => {
-      if (a.isDirectory !== b.isDirectory) {
-        return a.isDirectory ? -1 : 1
-      }
-      return a.name.localeCompare(b.name)
-    })
+    // return mapped.sort((a, b) => {
+    //   if (a.isDirectory !== b.isDirectory) {
+    //     return a.isDirectory ? -1 : 1
+    //   }
+    //   return a.name.localeCompare(b.name)
+    // })
+    return mapped.sort(compareFileExplorerEntries)
   }
 
   private async readFile(params: Record<string, unknown>) {
@@ -304,7 +306,11 @@ export class FsHandler {
     const source = expandTilde(params.source as string)
     const destination = expandTilde(params.destination as string)
     try {
-      await cp(source, destination, { recursive: true, force: false, errorOnExist: true })
+      await cp(source, destination, {
+        recursive: true,
+        force: false,
+        errorOnExist: true
+      })
     } catch (error) {
       const code = error instanceof Error ? (error as NodeJS.ErrnoException).code : undefined
       if (code === 'EEXIST' || code === 'ERR_FS_CP_EEXIST') {

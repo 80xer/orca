@@ -119,6 +119,7 @@ import { recordCrashBreadcrumb } from '../crash-reporting/crash-breadcrumb-store
 import { buildReadDirErrorBreadcrumb, type ReadDirThrowSite } from './readdir-error-diagnostics'
 import { splitWorktreeId } from '../../shared/worktree-id'
 import { getRuntimePathBasename } from '../../shared/cross-platform-path'
+import { compareFileExplorerEntries } from '../../shared/file-explorer-sort'
 import type { LocalProjectWorktreeGitOptions } from '../project-runtime-git-options'
 import { registerLocalLogTailHandlers } from './local-log-tail'
 import { localLogFileIdentity } from '../ai-vault/local-log-tail-reader'
@@ -518,12 +519,7 @@ export function registerFilesystemHandlers(
             isSymlink: entry.isSymbolicLink()
           }))
         )
-        return mapped.sort((a, b) => {
-          if (a.isDirectory !== b.isDirectory) {
-            return a.isDirectory ? -1 : 1
-          }
-          return a.name.localeCompare(b.name)
-        })
+        return mapped.sort(compareFileExplorerEntries)
       } catch (error: unknown) {
         recordCrashBreadcrumb(
           'fs_readdir_error',

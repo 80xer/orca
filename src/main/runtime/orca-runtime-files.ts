@@ -46,6 +46,7 @@ import type {
   RuntimeFileReadResult,
   RuntimeTerminalPathResolution
 } from '../../shared/runtime-types'
+import { compareFileExplorerNames } from '../../shared/file-explorer-sort'
 import {
   closeFileExplorerWatcherInWatcherProcess,
   watchFileExplorerInWatcherProcess
@@ -425,7 +426,7 @@ export class RuntimeFileCommands {
       : await listQuickOpenFiles(worktree.path, store)
     const entries = files
       .filter((relativePath) => isSafeMobileRelativePath(relativePath))
-      .sort((a, b) => a.localeCompare(b))
+      .sort(compareFileExplorerNames)
       .slice(0, MOBILE_FILE_LIST_LIMIT)
       .map((relativePath) => ({
         relativePath,
@@ -1089,7 +1090,11 @@ export class RuntimeFileCommands {
   private terminalArtifactAccessOptions(
     grant: TerminalFileGrant,
     maxBytes: number
-  ): { expectedRealPath: string; expectedStatIdentity: string | null; maxBytes: number } {
+  ): {
+    expectedRealPath: string
+    expectedStatIdentity: string | null
+    maxBytes: number
+  } {
     return {
       expectedRealPath: grant.absolutePath,
       expectedStatIdentity: grant.statIdentity,
@@ -1521,8 +1526,12 @@ export class RuntimeFileCommands {
     }
 
     const store = this.host.requireStore()
-    const oldPath = await resolveAuthorizedPath(oldTarget.path, store, { preserveSymlink: true })
-    const newPath = await resolveAuthorizedPath(newTarget.path, store, { preserveSymlink: true })
+    const oldPath = await resolveAuthorizedPath(oldTarget.path, store, {
+      preserveSymlink: true
+    })
+    const newPath = await resolveAuthorizedPath(newTarget.path, store, {
+      preserveSymlink: true
+    })
     await assertNoClobberRenameDestinationAvailable(oldPath, newPath)
     await rename(oldPath, newPath)
     return { ok: true }
@@ -1612,7 +1621,9 @@ export class RuntimeFileCommands {
       if (!provider) {
         return []
       }
-      return provider.listFiles(target.worktree.path, { excludePaths: options.excludePaths })
+      return provider.listFiles(target.worktree.path, {
+        excludePaths: options.excludePaths
+      })
     }
     return listQuickOpenFiles(target.worktree.path, this.host.requireStore(), options.excludePaths)
   }
@@ -1649,7 +1660,11 @@ export class RuntimeFileCommands {
     }
     const filePath = await resolveAuthorizedPath(target.path, this.host.requireStore())
     const stats = await stat(filePath)
-    return { size: stats.size, isDirectory: stats.isDirectory(), mtime: stats.mtimeMs }
+    return {
+      size: stats.size,
+      isDirectory: stats.isDirectory(),
+      mtime: stats.mtimeMs
+    }
   }
 
   private async searchLocalRuntimeFiles(
@@ -1767,7 +1782,11 @@ export class RuntimeFileCommands {
   private async resolveFileExplorerPath(
     worktreeSelector: string,
     relativePath: string
-  ): Promise<{ worktree: ResolvedRuntimeFileWorktree; path: string; connectionId?: string }> {
+  ): Promise<{
+    worktree: ResolvedRuntimeFileWorktree
+    path: string
+    connectionId?: string
+  }> {
     const target = await this.host.resolveRuntimeFileTarget(worktreeSelector)
     const normalizedRelativePath = normalizeRuntimeRelativePath(relativePath)
     return {
